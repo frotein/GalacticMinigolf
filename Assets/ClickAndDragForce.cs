@@ -23,6 +23,10 @@ public class ClickAndDragForce : MonoBehaviour {
     {
         if(nextFrame)
         {
+            foreach (Effector2D eff in preditor.effectors)
+            {
+                eff.enabled = true;
+            }
             nextFrame = false;
         }
        
@@ -39,7 +43,7 @@ public class ClickAndDragForce : MonoBehaviour {
         {
             Vector2 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector2 dirAndPower = worldPos - (Vector2)transform.position;
-            preditor.Simulate(rigidBody, dirAndPower * -forceIncreaseRate, 100);
+            preditor.Simulate(rigidBody, dirAndPower * -forceIncreaseRate, 300);
         }
         if(Input.GetMouseButtonUp(0) && grabbing)
         {
@@ -47,22 +51,17 @@ public class ClickAndDragForce : MonoBehaviour {
             grabbing = false;
         }
 
-        if(Input.GetKeyDown("m"))
-        {
-            rigidBody.isKinematic = false;
-            rigidBody.AddForce(initialForce);
-            nextFrame = true;
-        }
+       
 
         
 	}
 
     void FixedUpdate()
     {
-        if (!rigidBody.isKinematic)
+       /* if (!rigidBody.isKinematic)
         {
             preditor.actualVels.Add(rigidBody.velocity);
-        }
+        }*/
     }
     void OnCollisionEnter2D(Collision2D col)
     {
@@ -86,6 +85,12 @@ public class ClickAndDragForce : MonoBehaviour {
         Vector2 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector2 dirAndPower = worldPos - (Vector2)transform.position;
         rigidBody.isKinematic = false;
+        rigidBody.drag = .1f;
         rigidBody.AddForce(dirAndPower * -forceIncreaseRate);
+        foreach(Effector2D eff in preditor.effectors)
+        {
+            eff.enabled = false;
+        }
+        nextFrame = true;
     }
 }

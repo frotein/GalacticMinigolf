@@ -6,6 +6,7 @@ public class OrbitPredictor : MonoBehaviour {
 
     float mass;
     float drag;
+    float radius;
     Vector2 position;
     Vector2 velocity;
     List<Vector3> allPositions;
@@ -13,6 +14,7 @@ public class OrbitPredictor : MonoBehaviour {
     public List<Vector2> actualVels;
     public List<PointEffector2D> effectors;
     public LineRenderer lineRenderer;
+
     // Use this for initialization
 	void Start ()
     {
@@ -28,8 +30,8 @@ public class OrbitPredictor : MonoBehaviour {
     public void Simulate(Rigidbody2D body, Vector2 initialForce, int steps)
     {
         Vector2 vel = (initialForce / body.mass) * Time.fixedDeltaTime;
-        Debug.Log("predicted" + vel.y);
-        drag = body.drag;
+        drag = .1f;// body.drag;
+        radius = body.GetComponent<CircleCollider2D>().radius;
         InitialValues(body.position, vel, body.mass);
         allPositions = new List<Vector3>();
         velocities = new List<Vector2>();
@@ -58,19 +60,24 @@ public class OrbitPredictor : MonoBehaviour {
     }
     void PhysicsStep()
     {
-        foreach (PointEffector2D effector in effectors)
+        Collider2D[] cols2 = Physics2D.OverlapCircleAll(position, radius);
+        foreach(Collider2D col in cols2)
         {
-            Vector2 dir = new Vector2(effector.transform.position.x - position.x, effector.transform.position.y - position.y);
-            float distSqr = dir.magnitude * effector.distanceScale;
-            if (effector.forceMode == EffectorForceMode2D.InverseSquared)
-                distSqr *= distSqr;
-            float force =  effector.forceMagnitude / (distSqr);
-            float vel = (force / mass);
-            vel*= Time.fixedDeltaTime;
-            
-            velocity += -dir.normalized * vel;
-           
+            if(col.usedByEffector)
+            {
+                PointEffector2D effector = col.GetComponent<PointEffector2D>();
+                Vector2 dir = new Vector2(effector.transform.position.x - position.x, effector.transform.position.y - position.y);
+                float distSqr = dir.magnitude * effector.distanceScale;
+                if (effector.forceMode == EffectorForceMode2D.InverseSquared)
+                    distSqr *= distSqr;
+                float force = effector.forceMagnitude / (distSqr);
+                float vel = (force / mass);
+                vel *= Time.fixedDeltaTime;
+
+                velocity += -dir.normalized * vel;
+            }
         }
+        
         velocity *= (1f - (Time.fixedDeltaTime * drag));
         position += velocity * Time.fixedDeltaTime;
     }

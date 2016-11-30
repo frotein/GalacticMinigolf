@@ -24,13 +24,13 @@ public class OrbitPredictor : MonoBehaviour {
 	// Update is called once per frame
 	void Update ()
     {
-	
+	    
 	}
 
     public void Simulate(Rigidbody2D body, Vector2 initialForce, int steps)
     {
         Vector2 vel = (initialForce / body.mass) * Time.fixedDeltaTime;
-        drag = .1f;// body.drag;
+       // drag = .1f;// body.drag;
         radius = body.GetComponent<CircleCollider2D>().radius;
         InitialValues(body.position, vel, body.mass);
         allPositions = new List<Vector3>();
@@ -49,6 +49,14 @@ public class OrbitPredictor : MonoBehaviour {
 
     void Render()
     {
+        /*List<Vector3> eachOther = new List<Vector3>();
+        for(int i = 0; i < allPositions.Count; i++)
+        {
+            if(i % 2 == 0)
+            {
+                eachOther.Add(allPositions[i]);
+            }
+        }*/
         lineRenderer.SetVertexCount(allPositions.Count);
         lineRenderer.SetPositions(allPositions.ToArray());
     }
@@ -77,8 +85,9 @@ public class OrbitPredictor : MonoBehaviour {
                 velocity += -dir.normalized * vel;
             }
         }
-        
-        velocity *= (1f - (Time.fixedDeltaTime * drag));
+        if(drag != 0)
+           velocity *= (1f - (Time.fixedDeltaTime * drag));
+
         position += velocity * Time.fixedDeltaTime;
     }
 }

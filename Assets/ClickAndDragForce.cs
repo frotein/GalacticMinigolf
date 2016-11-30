@@ -85,7 +85,7 @@ public class ClickAndDragForce : MonoBehaviour {
         Vector2 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector2 dirAndPower = worldPos - (Vector2)transform.position;
         rigidBody.isKinematic = false;
-        rigidBody.drag = .1f;
+       // rigidBody.drag = .1f;
         rigidBody.AddForce(dirAndPower * -forceIncreaseRate);
         foreach(Effector2D eff in preditor.effectors)
         {

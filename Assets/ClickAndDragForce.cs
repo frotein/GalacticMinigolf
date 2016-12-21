@@ -75,7 +75,7 @@ public class ClickAndDragForce : MonoBehaviour {
     {
         if (col.gameObject.layer == LayerMask.NameToLayer("Planet"))
         {
-            rigidBody.drag = .1f;
+            rigidBody.drag = .01f;
         }
     }
 

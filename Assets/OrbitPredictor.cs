@@ -15,10 +15,14 @@ public class OrbitPredictor : MonoBehaviour {
     public List<PointEffector2D> effectors;
     public LineRenderer lineRenderer;
 
+    // how much the initial velocity in the predictor needs to increase for the prediction to still work
+    public float onGroundIncrease;
+
     // Use this for initialization
 	void Start ()
     {
         actualVels = new List<Vector2>();
+       
 	}
 	
 	// Update is called once per frame
@@ -29,8 +33,11 @@ public class OrbitPredictor : MonoBehaviour {
 
     public void Simulate(Rigidbody2D body, Vector2 initialForce, int steps)
     {
+     
+        drag = body.GetComponent<ClickAndDragForce>().storedDrag;
         Vector2 vel = (initialForce / body.mass) * Time.fixedDeltaTime;
-       // drag = .1f;// body.drag;
+        // drag = .1f;// body.drag;
+        vel = vel * (1 - Time.fixedDeltaTime * drag);
         radius = body.GetComponent<CircleCollider2D>().radius;
         InitialValues(body.position, vel, body.mass);
         allPositions = new List<Vector3>();
@@ -57,7 +64,7 @@ public class OrbitPredictor : MonoBehaviour {
                 eachOther.Add(allPositions[i]);
             }
         }*/
-        lineRenderer.SetVertexCount(allPositions.Count);
+        lineRenderer. numPositions = allPositions.Count;
         lineRenderer.SetPositions(allPositions.ToArray());
     }
     void InitialValues(Vector2 pos, Vector2 vel, float mas)

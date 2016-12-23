@@ -10,11 +10,13 @@ public class ClickAndDragForce : MonoBehaviour {
     public OrbitPredictor preditor;
     public Vector2 initialForce;
     bool nextFrame = false;
+    public float storedDrag;
     // Use this for initialization
 	void Start ()
     {
         collider = transform.GetComponent<Collider2D>();
         rigidBody = transform.GetComponent<Rigidbody2D>();
+        storedDrag = rigidBody.drag;
        
     }
 	
@@ -25,7 +27,12 @@ public class ClickAndDragForce : MonoBehaviour {
         {
             foreach (Effector2D eff in preditor.effectors)
             {
-                eff.enabled = true;
+                Collider2D[] cols = eff.GetComponents<Collider2D>();
+                foreach(Collider2D col in cols)
+                {
+                    if (!col.isTrigger)
+                        col.enabled = true;
+                }
             }
             nextFrame = false;
         }
@@ -75,7 +82,7 @@ public class ClickAndDragForce : MonoBehaviour {
     {
         if (col.gameObject.layer == LayerMask.NameToLayer("Planet"))
         {
-            rigidBody.drag = .01f;
+           // rigidBody.drag = .1f;
         }
     }
 
@@ -85,11 +92,17 @@ public class ClickAndDragForce : MonoBehaviour {
         Vector2 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector2 dirAndPower = worldPos - (Vector2)transform.position;
         rigidBody.isKinematic = false;
-       // rigidBody.drag = .1f;
+        rigidBody.drag = storedDrag;
+        Debug.Log(rigidBody.drag);
         rigidBody.AddForce(dirAndPower * -forceIncreaseRate);
         foreach(Effector2D eff in preditor.effectors)
         {
-            eff.enabled = false;
+            Collider2D[] cols = eff.GetComponents<Collider2D>();
+            foreach (Collider2D col in cols)
+            {
+                if (!col.isTrigger)
+                    col.enabled = false;
+            }
         }
         nextFrame = true;
     }

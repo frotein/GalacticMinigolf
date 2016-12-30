@@ -6,6 +6,7 @@ public class CollectableAnimal : MonoBehaviour {
 
     public Transform planetOn;
     bool collected;
+    public bool snapToPlanet;
     // Use this for initialization
 	void Start ()
     {
@@ -16,21 +17,23 @@ public class CollectableAnimal : MonoBehaviour {
          // get the collider used for the planets surface do the animal can be placed Collectly on the ground
         CircleCollider2D[] cols = planetOn.GetComponents<CircleCollider2D>();
 
-        if(cols != null)
+        if (snapToPlanet)
         {
-            foreach(CircleCollider2D col in cols)
+            if (cols != null)
             {
-                if(!col.isTrigger)
+                foreach (CircleCollider2D col in cols)
                 {
-                    float radius = col.radius * planetOn.transform.localScale.x;
-                    transform.position = planetOn.position + (dir.normalized * (radius + (myCollider.size.y / 2f))).XYZ(0);
-                    break;
+                    if (!col.isTrigger)
+                    {
+                        float radius = col.radius * planetOn.transform.localScale.x;
+                        transform.position = planetOn.position + (dir.normalized * (radius + (myCollider.size.y / 2f))).XYZ(0);
+                        break;
+                    }
                 }
             }
+
+            transform.parent = planetOn;
         }
-
-        transform.parent = planetOn;
-
 
 
     }

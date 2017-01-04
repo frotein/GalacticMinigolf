@@ -35,6 +35,7 @@ public class OrbitPredictor : MonoBehaviour {
     //then returns the orbit path so its not needed to be simulated again
     public void SimulateUntilOrbit(Vector2 pos, float pretendMass, float rad, Vector2 initialForce, int maxSteps = 9999)
     {
+        drag = 0;
         allPositions = new List<Vector3>();
         velocities = new List<Vector2>();
         velocities.Add(velocity);
@@ -112,7 +113,6 @@ public class OrbitPredictor : MonoBehaviour {
     }
     void PhysicsStep()
     {
-        drag = 0;
         Collider2D[] cols2 = Physics2D.OverlapCircleAll(position, radius);
         foreach(Collider2D col in cols2)
         {

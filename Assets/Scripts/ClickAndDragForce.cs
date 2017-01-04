@@ -50,7 +50,7 @@ public class ClickAndDragForce : MonoBehaviour {
         {
             Vector2 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector2 dirAndPower = worldPos - (Vector2)transform.position;
-            preditor.Simulate(rigidBody, dirAndPower * -forceIncreaseRate, 300);
+            preditor.Simulate(rigidBody, dirAndPower * -forceIncreaseRate, 900);
         }
         if(Input.GetMouseButtonUp(0) && grabbing)
         {
@@ -93,7 +93,6 @@ public class ClickAndDragForce : MonoBehaviour {
         Vector2 dirAndPower = worldPos - (Vector2)transform.position;
         rigidBody.isKinematic = false;
         rigidBody.drag = storedDrag;
-        Debug.Log(rigidBody.drag);
         rigidBody.AddForce(dirAndPower * -forceIncreaseRate);
         foreach(Effector2D eff in preditor.effectors)
         {

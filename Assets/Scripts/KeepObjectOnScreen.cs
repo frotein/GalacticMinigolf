@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class KeepObjectOnScreen : MonoBehaviour {
 
-	public Transform topLeft, bottomRight, player;
+	public Transform min, max, player;
     // Use this for initialization
 	void Start () {
 		
@@ -14,30 +14,30 @@ public class KeepObjectOnScreen : MonoBehaviour {
 	void Update ()
     {
         Vector3 movement = Vector3.zero;
-        if (player.position.y > topLeft.position.y)
+        if (player.position.y > max.position.y)
         {
-            float diff = player.position.y - topLeft.position.y;
+            float diff = player.position.y - max.position.y;
             movement.y += diff;
         }
         else
         {
-            if(player.position.y < bottomRight.position.y)
+            if(player.position.y < min.position.y)
             {
-                float diff = player.position.y - bottomRight.position.y;
+                float diff = player.position.y - min.position.y;
                 movement.y += diff;
             }
         }
 
-        if (player.position.x < topLeft.position.x)
+        if (player.position.x < min.position.x)
         {
-            float diff = player.position.x - topLeft.position.x;
+            float diff = player.position.x - min.position.x;
             movement.x += diff;
         }
         else
         {
-            if (player.position.x > bottomRight.position.x)
+            if (player.position.x > max.position.x)
             {
-                float diff = player.position.x - bottomRight.position.x;
+                float diff = player.position.x - max.position.x;
                 movement.x += diff;
             }
         }

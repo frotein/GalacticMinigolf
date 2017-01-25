@@ -64,8 +64,51 @@ public class OrbitPredictor : MonoBehaviour {
 
         if (i == 999) Debug.Log("hit max steps");
 
+       // Render();
+    }
+    public void SimulateMoving(Rigidbody2D body, float time)
+    {
+        drag = body.GetComponent<ClickAndDragForce>().storedDrag;
+        radius = body.GetComponent<CircleCollider2D>().radius;
+        Vector2 vel = body.velocity;
+        InitialValues(body.position, vel, body.mass);
+        allPositions = new List<Vector3>();
+        velocities = new List<Vector2>();
+        velocities.Add(velocity);
+        allPositions.Add(body.position);
+        for (int i = 0; i < time / Time.deltaTime; i++)
+        {
+            PhysicsStep();
+            allPositions.Add(new Vector3(position.x, position.y, 0));
+            velocities.Add(velocity);
+        }
+
         Render();
     }
+
+    public void SimulateForDistance(Rigidbody2D body, float dist)
+    {
+        drag = body.GetComponent<ClickAndDragForce>().storedDrag;
+        radius = body.GetComponent<CircleCollider2D>().radius;
+        Vector2 vel = body.velocity;
+        InitialValues(body.position, vel, body.mass);
+        allPositions = new List<Vector3>();
+        velocities = new List<Vector2>();
+        velocities.Add(velocity);
+        //allPositions.Add(body.position);
+        float lnth = TotalLength();
+        int stepsRan = 0;
+        while (lnth < dist)
+        {
+            PhysicsStep();
+            allPositions.Add(new Vector3(position.x, position.y, 0));
+            velocities.Add(velocity);
+            lnth = TotalLength();
+            stepsRan++;
+        }
+        Render();
+    }
+
     public void Simulate(Rigidbody2D body, Vector2 initialForce, int steps)
     {
      
@@ -86,19 +129,36 @@ public class OrbitPredictor : MonoBehaviour {
 
         Render();
     }
-    public Vector2[] SimulationPositions()
+    // returns the recorded positions in local space of par, if par is null it is in world space
+    public Vector2[] SimulationPositions(Transform par = null)
     {
         Vector2[] final = new Vector2[allPositions.Count];
         int i = 0;
         foreach (Vector3 pos in allPositions)
         {
             final[i] = pos.XY();
+            if(par != null)
+            {
+                final[i] = par.InverseTransformPoint(final[i]);
+            }
             i++;
         }
 
         return final;
     }
+    public float TotalLength()
+    {
+        float lnth = 0;
+        for(int i = 0; i < allPositions.Count - 1; i++)
+        {
+            Vector2 pos1 = allPositions[i];
+            Vector2 pos2 = allPositions[(i + 1) % allPositions.Count];
+            lnth += Vector2.Distance(pos1, pos2);
 
+        }
+
+        return lnth;
+    }
     void Render()
     {
        

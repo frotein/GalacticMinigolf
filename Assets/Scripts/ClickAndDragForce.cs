@@ -5,9 +5,10 @@ public class ClickAndDragForce : MonoBehaviour {
 
     public float forceIncreaseRate;
     Collider2D collider;
-    bool grabbing;
+    public bool grabbing;
     Rigidbody2D rigidBody;
     public OrbitPredictor preditor;
+    public KeepObjectOnScreen movingCamera;
     public Vector2 initialForce;
     bool nextFrame = false;
     public float storedDrag;
@@ -37,9 +38,9 @@ public class ClickAndDragForce : MonoBehaviour {
             nextFrame = false;
         }
        
-        if (Input.GetMouseButtonDown(0) && !grabbing)
+        if (Controls.Clicked() && !grabbing)
         {
-            Vector2 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 worldPos = Controls.ClickedPosition();
             if (collider.OverlapPoint(worldPos))
             {
                 grabbing = true;
@@ -50,11 +51,13 @@ public class ClickAndDragForce : MonoBehaviour {
         {
             Vector2 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector2 dirAndPower = worldPos - (Vector2)transform.position;
-            preditor.Simulate(rigidBody, dirAndPower * -forceIncreaseRate, 900);
+           
+            preditor.Simulate(rigidBody, dirAndPower * -forceIncreaseRate, 300);
         }
-        if(Input.GetMouseButtonUp(0) && grabbing)
+        if(Controls.Released() && grabbing)
         {
             ApplyForce();
+            movingCamera.enabled = true;
             grabbing = false;
         }
 
@@ -65,11 +68,9 @@ public class ClickAndDragForce : MonoBehaviour {
 
     void FixedUpdate()
     {
-       /* if (!rigidBody.isKinematic)
-        {
-            preditor.actualVels.Add(rigidBody.velocity);
-        }*/
+    
     }
+
     void OnCollisionEnter2D(Collision2D col)
     {
         if (col.gameObject.layer == LayerMask.NameToLayer("Planet"))
@@ -86,10 +87,19 @@ public class ClickAndDragForce : MonoBehaviour {
         }
     }
 
+    void OnCollisionStay2D(Collision2D col)
+    {
+        if(rigidBody.velocity.magnitude < 0.2f && col.relativeVelocity.magnitude < 0.2f)
+        {
+            rigidBody.isKinematic = true;
+            transform.parent = col.gameObject.transform;
+        }
+    }
+
     void ApplyForce()
     {
 
-        Vector2 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 worldPos = Controls.ClickedPosition();
         Vector2 dirAndPower = worldPos - (Vector2)transform.position;
         rigidBody.isKinematic = false;
         rigidBody.drag = storedDrag;

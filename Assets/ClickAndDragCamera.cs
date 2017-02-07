@@ -26,11 +26,11 @@ public class ClickAndDragCamera : MonoBehaviour
             startPos = Controls.ScreenPosition();
             cameraStart = transform.position.XY();
             dragging = true;
+          
            // otherCameraControl.enabled = false;
         }
         Camera.main.orthographicSize += Controls.Zoom();
-        if(!ballController.gameObject.GetComponent<Rigidbody2D>().isKinematic)
-            dragging = false;
+        
         
         if(dragging)
         {

@@ -4,6 +4,7 @@ using System.Collections;
 public class ClickAndDragForce : MonoBehaviour {
 
     public float forceIncreaseRate;
+    public float scale;
     Collider2D collider;
     public bool grabbing;
     Rigidbody2D rigidBody;
@@ -35,6 +36,7 @@ public class ClickAndDragForce : MonoBehaviour {
                         col.enabled = true;
                 }
             }
+            Debug.Log(rigidBody.velocity + " after velocity");
             nextFrame = false;
         }
        
@@ -52,7 +54,7 @@ public class ClickAndDragForce : MonoBehaviour {
             Vector2 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector2 dirAndPower = worldPos - (Vector2)transform.position;
            
-            preditor.Simulate(rigidBody, dirAndPower * -forceIncreaseRate, 300);
+            preditor.Simulate(rigidBody, dirAndPower * -forceIncreaseRate / scale, ((int)(300 * scale)));
         }
         if(Controls.Released() && grabbing)
         {
@@ -101,10 +103,14 @@ public class ClickAndDragForce : MonoBehaviour {
 
         Vector2 worldPos = Controls.ClickedPosition();
         Vector2 dirAndPower = worldPos - (Vector2)transform.position;
-        rigidBody.isKinematic = false;
+        if(!rigidBody.simulated)
+            rigidBody.simulated = true;
         rigidBody.drag = storedDrag;
-        rigidBody.AddForce(dirAndPower * -forceIncreaseRate);
-        foreach(Effector2D eff in preditor.effectors)
+        Debug.Log(rigidBody.velocity + " before velocity");
+        Debug.Log("hit velocity " + (((dirAndPower * -forceIncreaseRate) / rigidBody.mass) * Time.fixedDeltaTime));
+        rigidBody.AddForce(dirAndPower * -forceIncreaseRate / scale);
+        
+       /* foreach(Effector2D eff in preditor.effectors)
         {
             Collider2D[] cols = eff.GetComponents<Collider2D>();
             foreach (Collider2D col in cols)
@@ -112,7 +118,7 @@ public class ClickAndDragForce : MonoBehaviour {
                 if (!col.isTrigger)
                     col.enabled = false;
             }
-        }
+        }*/
         nextFrame = true;
     }
 }

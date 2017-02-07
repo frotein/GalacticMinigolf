@@ -6,6 +6,7 @@ public class OrbitPredictor : MonoBehaviour {
 
     float mass;
     public float drag;
+    public float scale;
     float radius;
     Vector2 position;
     Vector2 velocity;
@@ -115,7 +116,9 @@ public class OrbitPredictor : MonoBehaviour {
         drag = body.GetComponent<ClickAndDragForce>().storedDrag;
         Vector2 vel = (initialForce / body.mass) * Time.fixedDeltaTime;      
         radius = body.GetComponent<CircleCollider2D>().radius;
-        InitialValues(body.position, vel, body.mass);
+        Debug.Log((body.velocity) + " " + vel);
+        InitialValues(body.position, body.velocity +  vel , body.mass);
+        Debug.Log((" initial vel = " + velocity));
         allPositions = new List<Vector3>();
         velocities = new List<Vector2>();
         velocities.Add(velocity);

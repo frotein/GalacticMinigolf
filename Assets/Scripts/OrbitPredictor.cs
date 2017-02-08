@@ -11,9 +11,11 @@ public class OrbitPredictor : MonoBehaviour {
     Vector2 position;
     Vector2 velocity;
     List<Vector3> allPositions;
+    public float quality;
     public List<Vector2> velocities;
     public List<Vector2> actualVels;
     public List<PointEffector2D> effectors;
+
     public LineRenderer lineRenderer;
     public static OrbitPredictor instance;
     // how much the initial velocity in the predictor needs to increase for the prediction to still work
@@ -118,7 +120,7 @@ public class OrbitPredictor : MonoBehaviour {
         radius = body.GetComponent<CircleCollider2D>().radius;
         Debug.Log((body.velocity) + " " + vel);
         InitialValues(body.position, body.velocity +  vel , body.mass);
-        Debug.Log((" initial vel = " + velocity));
+        //Debug.Log((" initial vel = " + velocity));
         allPositions = new List<Vector3>();
         velocities = new List<Vector2>();
         velocities.Add(velocity);

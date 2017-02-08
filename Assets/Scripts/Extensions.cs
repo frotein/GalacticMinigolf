@@ -29,4 +29,11 @@ public static class ExtensionMethods
 
 		return (distX * distX) + (distY * distY);
 	}
+
+    public static Transform TopParent(this Transform t)
+    {
+        if (t.parent == null)
+            return t;
+        else return t.parent.TopParent();
+    }
 }

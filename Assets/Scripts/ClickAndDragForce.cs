@@ -19,7 +19,7 @@ public class ClickAndDragForce : MonoBehaviour {
         collider = transform.GetComponent<Collider2D>();
         rigidBody = transform.GetComponent<Rigidbody2D>();
         storedDrag = rigidBody.drag;
-       
+        StaticObjects.golfBall = transform;
     }
 	
 	// Update is called once per frame
@@ -54,7 +54,7 @@ public class ClickAndDragForce : MonoBehaviour {
             Vector2 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector2 dirAndPower = worldPos - (Vector2)transform.position;
            
-            preditor.Simulate(rigidBody, dirAndPower * -forceIncreaseRate / scale, ((int)(300 * scale)));
+            preditor.Simulate(rigidBody, dirAndPower * -forceIncreaseRate / scale, ((int)(600 * scale)));
         }
         if(Controls.Released() && grabbing)
         {
@@ -85,7 +85,8 @@ public class ClickAndDragForce : MonoBehaviour {
     {
         if (col.gameObject.layer == LayerMask.NameToLayer("Planet"))
         {
-           // rigidBody.drag = .1f;
+            // rigidBody.drag = .1f;
+            rigidBody.drag = 0;
         }
     }
 
@@ -93,8 +94,9 @@ public class ClickAndDragForce : MonoBehaviour {
     {
         if(rigidBody.velocity.magnitude < 0.2f && col.relativeVelocity.magnitude < 0.2f)
         {
-            rigidBody.isKinematic = true;
-            transform.parent = col.gameObject.transform;
+            // rigidBody.isKinematic = true;
+            //  transform.parent = col.gameObject.transform;
+            rigidBody.simulated = false;
         }
     }
 

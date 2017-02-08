@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class Goal : MonoBehaviour {
 
-	// Use this for initialization
+    public GameObject nextLevel;
+    // Use this for initialization
 	void Start () {
 		
 	}
@@ -19,6 +20,9 @@ public class Goal : MonoBehaviour {
         if(col.transform.tag == "Player")
         {
             col.gameObject.SetActive(false);
+            if(nextLevel != null)
+                nextLevel.SetActive(true);
+            transform.TopParent().gameObject.SetActive(false);
         }
     }
 }

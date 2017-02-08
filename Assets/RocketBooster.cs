@@ -27,7 +27,9 @@ public class RocketBooster : MonoBehaviour {
                
             }
 
-            OrbitPredictor.instance.SimulateForDistance(body, 10f);
-        }	
-	}
+            
+        }
+
+        OrbitPredictor.instance.SimulateMoving(body, 10) ;
+    }
 }

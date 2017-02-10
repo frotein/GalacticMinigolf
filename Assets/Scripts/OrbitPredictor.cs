@@ -7,6 +7,9 @@ public class OrbitPredictor : MonoBehaviour {
     float mass;
     public float drag;
     public float scale;
+    public bool hasConsistentLine;
+    public bool showConsistentLine;
+    public int consistentLineLength;
     float radius;
     Vector2 position;
     Vector2 velocity;
@@ -15,25 +18,51 @@ public class OrbitPredictor : MonoBehaviour {
     public List<Vector2> velocities;
     public List<Vector2> actualVels;
     public List<PointEffector2D> effectors;
-
+    List<Vector3> consistentLinePositions;
+    Vector2 consistentLinePosition;
+    Vector2 consistentLineVelocity;
     public LineRenderer lineRenderer;
     public static OrbitPredictor instance;
     // how much the initial velocity in the predictor needs to increase for the prediction to still work
     public float onGroundIncrease;
+    public Rigidbody2D ball;
+    float consistentLineMass;
 
     // Use this for initialization
 	void Start ()
     {
         actualVels = new List<Vector2>();
         instance = this;
-	}
-	
-	// Update is called once per frame
-	void Update ()
-    {
-	    
-	}
+        ResetConsistentLine();
 
+        
+
+    }
+
+    // Update is called once per frame
+    void FixedUpdate ()
+    {
+        if (hasConsistentLine)
+        {
+            consistentLinePositions.RemoveAt(0);
+            SimulateConsistentLineForDistance(consistentLineLength);
+            if(showConsistentLine)
+                DrawConsistentLine();   
+        }
+    }
+    public void ResetConsistentLine()
+    {
+        consistentLinePositions = new List<Vector3>();
+        Vector2 vel = ball.velocity;
+        consistentLineMass = ball.mass;
+        consistentLinePosition = ball.position;
+        consistentLineVelocity = vel;
+        Debug.Log("reset line");
+        if (hasConsistentLine)
+        {
+            SimulateConsistentLineForDistance(consistentLineLength);
+        }
+    }
     // used to predict how orbits of moon and planets that should not be effected by the ball will be 
     //then returns the orbit path so its not needed to be simulated again
     public void SimulateUntilOrbit(Vector2 pos, float pretendMass, float rad, Vector2 initialForce, int maxSteps = 9999)
@@ -88,7 +117,21 @@ public class OrbitPredictor : MonoBehaviour {
 
         Render();
     }
-
+    public void SimulateConsistentLineForDistance(float dist)
+    {
+        drag = 0;
+        radius = ball.GetComponent<CircleCollider2D>().radius;
+        float lnth = TotalLengthForConsistentLine();
+        int stepsRan = 0;
+       
+        while (lnth < dist)
+        {
+            PhysicsStepForConsistentLine();
+            consistentLinePositions.Add(new Vector3(consistentLinePosition.x, consistentLinePosition.y, 0));
+            lnth = TotalLengthForConsistentLine();
+            stepsRan++;
+        }
+    }
     public void SimulateForDistance(Rigidbody2D body, float dist)
     {
         drag = body.GetComponent<ClickAndDragForce>().storedDrag;
@@ -134,6 +177,12 @@ public class OrbitPredictor : MonoBehaviour {
 
         Render();
     }
+
+    void DrawConsistentLine()
+    {
+        lineRenderer.numPositions = consistentLinePositions.Count;
+        lineRenderer.SetPositions(consistentLinePositions.ToArray());
+    }
     // returns the recorded positions in local space of par, if par is null it is in world space
     public Vector2[] SimulationPositions(Transform par = null)
     {
@@ -164,6 +213,22 @@ public class OrbitPredictor : MonoBehaviour {
 
         return lnth;
     }
+
+    public float TotalLengthForConsistentLine()
+    {
+        float lnth = 0;
+        for (int i = 0; i < consistentLinePositions.Count - 1; i++)
+        {
+            Vector2 pos1 = consistentLinePositions[i];
+            Vector2 pos2 = consistentLinePositions[(i + 1) % consistentLinePositions.Count];
+            lnth += Vector2.Distance(pos1, pos2);
+
+        }
+
+        return lnth;
+    }
+
+
     void Render()
     {
        
@@ -176,6 +241,9 @@ public class OrbitPredictor : MonoBehaviour {
         position = pos;
         velocity = vel;
     }
+
+
+
     void PhysicsStep()
     {
         Collider2D[] cols2 = Physics2D.OverlapCircleAll(position, radius);
@@ -199,5 +267,30 @@ public class OrbitPredictor : MonoBehaviour {
         { velocity *= (1f - (Time.fixedDeltaTime * drag)); }
 
         position += velocity * Time.fixedDeltaTime;
+    }
+
+    void PhysicsStepForConsistentLine()
+    {
+        Collider2D[] cols2 = Physics2D.OverlapCircleAll(consistentLinePosition, radius);
+        foreach (Collider2D col in cols2)
+        {
+            if (col.usedByEffector)
+            {
+                PointEffector2D effector = col.GetComponent<PointEffector2D>();
+                Vector2 dir = new Vector2(effector.transform.position.x - consistentLinePosition.x, effector.transform.position.y - consistentLinePosition.y);
+                float distSqr = dir.magnitude * effector.distanceScale;
+                if (effector.forceMode == EffectorForceMode2D.InverseSquared)
+                    distSqr *= distSqr;
+                float force = effector.forceMagnitude / (distSqr);
+                float vel = (force / consistentLineMass);
+                vel *= Time.fixedDeltaTime;
+
+                consistentLineVelocity += -dir.normalized * vel;
+            }
+        }
+        if (drag != 0)
+        { consistentLineVelocity *= (1f - (Time.fixedDeltaTime * drag)); }
+
+        consistentLinePosition += consistentLineVelocity * Time.fixedDeltaTime;
     }
 }

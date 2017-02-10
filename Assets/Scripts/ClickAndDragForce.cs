@@ -13,6 +13,7 @@ public class ClickAndDragForce : MonoBehaviour {
     public Vector2 initialForce;
     bool nextFrame = false;
     public float storedDrag;
+    int waitFrames;
     // Use this for initialization
 	void Start ()
     {
@@ -36,10 +37,20 @@ public class ClickAndDragForce : MonoBehaviour {
                         col.enabled = true;
                 }
             }
-            Debug.Log(rigidBody.velocity + " after velocity");
             nextFrame = false;
         }
-       
+        if (waitFrames > 0)
+        {
+            if (Time.timeScale > 0)
+            {
+                waitFrames--;
+                if (waitFrames == 0)
+                {
+                    OrbitPredictor.instance.ResetConsistentLine();
+                    OrbitPredictor.instance.showConsistentLine = true;
+                }
+            }
+        }
         if (Controls.Clicked() && !grabbing)
         {
             Vector2 worldPos = Controls.ClickedPosition();
@@ -111,16 +122,18 @@ public class ClickAndDragForce : MonoBehaviour {
         Debug.Log(rigidBody.velocity + " before velocity");
         Debug.Log("hit velocity " + (((dirAndPower * -forceIncreaseRate) / rigidBody.mass) * Time.fixedDeltaTime));
         rigidBody.AddForce(dirAndPower * -forceIncreaseRate / scale);
-        
-       /* foreach(Effector2D eff in preditor.effectors)
-        {
-            Collider2D[] cols = eff.GetComponents<Collider2D>();
-            foreach (Collider2D col in cols)
-            {
-                if (!col.isTrigger)
-                    col.enabled = false;
-            }
-        }*/
+
+        /* foreach(Effector2D eff in preditor.effectors)
+         {
+             Collider2D[] cols = eff.GetComponents<Collider2D>();
+             foreach (Collider2D col in cols)
+             {
+                 if (!col.isTrigger)
+                     col.enabled = false;
+             }
+         }*/
+        waitFrames = 5;
         nextFrame = true;
+        OrbitPredictor.instance.showConsistentLine = false;
     }
 }

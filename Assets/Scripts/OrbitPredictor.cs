@@ -25,9 +25,10 @@ public class OrbitPredictor : MonoBehaviour {
     public static OrbitPredictor instance;
     // how much the initial velocity in the predictor needs to increase for the prediction to still work
     public float onGroundIncrease;
-    public Rigidbody2D ball;
+    public Ball ball;
     float consistentLineMass;
-
+    public bool simulating;
+    int steps;
     // Use this for initialization
 	void Start ()
     {
@@ -55,7 +56,7 @@ public class OrbitPredictor : MonoBehaviour {
         consistentLinePositions = new List<Vector3>();
         Vector2 vel = ball.velocity;
         consistentLineMass = ball.mass;
-        consistentLinePosition = ball.position;
+        consistentLinePosition = ball.transform.position;
         consistentLineVelocity = vel;
         Debug.Log("reset line");
         if (hasConsistentLine)
@@ -132,6 +133,10 @@ public class OrbitPredictor : MonoBehaviour {
             stepsRan++;
         }
     }
+
+    
+
+
     public void SimulateForDistance(Rigidbody2D body, float dist)
     {
         drag = body.GetComponent<ClickAndDragForce>().storedDrag;
@@ -155,19 +160,18 @@ public class OrbitPredictor : MonoBehaviour {
         Render();
     }
 
-    public void Simulate(Rigidbody2D body, Vector2 initialForce, int steps)
+    public void Simulate(Ball body, Vector2 vell, int steps)
     {
      
         drag = body.GetComponent<ClickAndDragForce>().storedDrag;
-        Vector2 vel = (initialForce / body.mass) * Time.fixedDeltaTime;      
+        Vector2 vel = vell;      
         radius = body.GetComponent<CircleCollider2D>().radius;
-        Debug.Log((body.velocity) + " " + vel);
-        InitialValues(body.position, body.velocity +  vel , body.mass);
+        InitialValues(body.transform.position, body.velocity +  vel , body.mass);
         //Debug.Log((" initial vel = " + velocity));
         allPositions = new List<Vector3>();
         velocities = new List<Vector2>();
         velocities.Add(velocity);
-        allPositions.Add(body.position);
+        allPositions.Add(body.transform.position);
         for (int i = 0; i < steps; i++)
         {
             PhysicsStep();
@@ -176,6 +180,35 @@ public class OrbitPredictor : MonoBehaviour {
         }
 
         Render();
+    }
+    public void RunSimulateCoroutine(Ball body, Vector2 vel, int steps)
+    {
+        allPositions = new List<Vector3>();
+        allPositions.Add(body.transform.position);
+        InitialValues(body.transform.position, body.velocity + vel, body.mass);
+        this.steps = steps;
+        StartCoroutine("SimulateCo");
+
+    }
+    public IEnumerator SimulateCo()
+    {
+        simulating = true;
+        
+        velocities = new List<Vector2>();
+        velocities.Add(velocity);
+        for (int i = 0; i < steps; i++)
+        {
+            PhysicsStep();
+            allPositions.Add(new Vector3(position.x, position.y, 0));
+            velocities.Add(velocity);
+            if (i % 600 == 0)
+                yield return null;
+        }
+
+        simulating = false;
+        Render();
+        
+        
     }
 
     void DrawConsistentLine()
@@ -243,7 +276,31 @@ public class OrbitPredictor : MonoBehaviour {
     }
 
 
+    public void Step(Ball bal)
+    {
+       
+        Collider2D[] cols2 = Physics2D.OverlapCircleAll(bal.transform.position, radius);
+        foreach (Collider2D col in cols2)
+        {
+            if (col.usedByEffector)
+            {
+                PointEffector2D effector = col.GetComponent<PointEffector2D>();
+                Vector2 dir = new Vector2(effector.transform.position.x - bal.transform.position.x, effector.transform.position.y - bal.transform.position.y);
+                float distSqr = dir.magnitude * effector.distanceScale;
+                if (effector.forceMode == EffectorForceMode2D.InverseSquared)
+                    distSqr *= distSqr;
+                float force = effector.forceMagnitude / (distSqr);
+                float vel = (force / bal.mass);
+                vel *= Time.fixedDeltaTime;
 
+                bal.velocity += -dir.normalized * vel;
+            }
+        }
+        if (bal.drag != 0)
+        { bal.velocity *= (1f - (Time.fixedDeltaTime * bal.drag)); }
+
+        bal.transform.position += (bal.velocity * Time.fixedDeltaTime).XYZ(0);
+    }
     void PhysicsStep()
     {
         Collider2D[] cols2 = Physics2D.OverlapCircleAll(position, radius);

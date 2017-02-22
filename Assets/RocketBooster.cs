@@ -17,7 +17,7 @@ public class RocketBooster : MonoBehaviour {
 	// Update is called once per frame
 	void Update ()
     {
-	    if(!body.isKinematic)
+	   /* if(!body.isKinematic)
         {
             if(Controls.Held() && fuel > 0 && !EventSystem.current.IsPointerOverGameObject())
             {
@@ -30,6 +30,6 @@ public class RocketBooster : MonoBehaviour {
             
         }
 
-        OrbitPredictor.instance.SimulateForDistance(body, 20f);
-    }
+        OrbitPredictor.instance.SimulateForDistance(body, 20f);*/
+    } 
 }

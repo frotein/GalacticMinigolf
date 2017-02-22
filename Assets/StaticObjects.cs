@@ -15,4 +15,14 @@ public class StaticObjects : MonoBehaviour
     {
         Camera.main.GetComponent<ClickAndDragCamera>().enabled = on;
     }
+
+    public void TogglePulseEngine(bool on)
+    {
+        golfBall.GetComponent<ClickAndDragForce>().enabled = on;
+    }
+
+    public void ToggleKeepOnScreen(bool on)
+    {
+        Camera.main.GetComponent<KeepObjectOnScreen>().enabled = on;
+    }
 }

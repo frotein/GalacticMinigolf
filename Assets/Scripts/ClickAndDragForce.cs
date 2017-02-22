@@ -5,9 +5,9 @@ public class ClickAndDragForce : MonoBehaviour {
 
     public float forceIncreaseRate;
     public float scale;
-    Collider2D collider;
+    public Collider2D grabCollider;
     public bool grabbing;
-    Rigidbody2D rigidBody;
+    Ball ball;
     public OrbitPredictor preditor;
     public KeepObjectOnScreen movingCamera;
     public Vector2 initialForce;
@@ -17,9 +17,9 @@ public class ClickAndDragForce : MonoBehaviour {
     // Use this for initialization
 	void Start ()
     {
-        collider = transform.GetComponent<Collider2D>();
-        rigidBody = transform.GetComponent<Rigidbody2D>();
-        storedDrag = rigidBody.drag;
+       
+        ball = transform.GetComponent<Ball>();
+      //  storedDrag = rigidBody.drag;
         StaticObjects.golfBall = transform;
     }
 	
@@ -54,7 +54,7 @@ public class ClickAndDragForce : MonoBehaviour {
         if (Controls.Clicked() && !grabbing)
         {
             Vector2 worldPos = Controls.ClickedPosition();
-            if (collider.OverlapPoint(worldPos))
+            if (grabCollider.OverlapPoint(worldPos))
             {
                 grabbing = true;
             }
@@ -62,10 +62,10 @@ public class ClickAndDragForce : MonoBehaviour {
 
         if(grabbing)
         {
-            Vector2 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 worldPos = Controls.ClickedPosition();
             Vector2 dirAndPower = worldPos - (Vector2)transform.position;
-           
-            preditor.Simulate(rigidBody, dirAndPower * -forceIncreaseRate / scale, ((int)(600 * scale)));
+           if(!preditor.simulating)
+            preditor.RunSimulateCoroutine(ball, dirAndPower * -forceIncreaseRate / scale, ((int)(500 * scale)));
         }
         if(Controls.Released() && grabbing)
         {
@@ -84,31 +84,19 @@ public class ClickAndDragForce : MonoBehaviour {
     
     }
 
-    void OnCollisionEnter2D(Collision2D col)
+    void OnTriggerEnter2D(Collider2D col)
     {
-        if (col.gameObject.layer == LayerMask.NameToLayer("Planet"))
-        {
-            rigidBody.drag = 2;
-        }
+        ball.enabled = false;
     }
 
     void OnCollisionExit2D(Collision2D col)
     {
-        if (col.gameObject.layer == LayerMask.NameToLayer("Planet"))
-        {
-            // rigidBody.drag = .1f;
-            rigidBody.drag = 0;
-        }
+       
     }
 
     void OnCollisionStay2D(Collision2D col)
     {
-        if(rigidBody.velocity.magnitude < 0.2f && col.relativeVelocity.magnitude < 0.2f)
-        {
-            // rigidBody.isKinematic = true;
-            //  transform.parent = col.gameObject.transform;
-            rigidBody.simulated = false;
-        }
+        
     }
 
     void ApplyForce()
@@ -116,22 +104,9 @@ public class ClickAndDragForce : MonoBehaviour {
 
         Vector2 worldPos = Controls.ClickedPosition();
         Vector2 dirAndPower = worldPos - (Vector2)transform.position;
-        if(!rigidBody.simulated)
-            rigidBody.simulated = true;
-        rigidBody.drag = storedDrag;
-        Debug.Log(rigidBody.velocity + " before velocity");
-        Debug.Log("hit velocity " + (((dirAndPower * -forceIncreaseRate) / rigidBody.mass) * Time.fixedDeltaTime));
-        rigidBody.AddForce(dirAndPower * -forceIncreaseRate / scale);
-
-        /* foreach(Effector2D eff in preditor.effectors)
-         {
-             Collider2D[] cols = eff.GetComponents<Collider2D>();
-             foreach (Collider2D col in cols)
-             {
-                 if (!col.isTrigger)
-                     col.enabled = false;
-             }
-         }*/
+        
+        ball.velocity += (dirAndPower * -forceIncreaseRate / scale);
+        ball.simulate = true;
         waitFrames = 5;
         nextFrame = true;
         OrbitPredictor.instance.showConsistentLine = false;

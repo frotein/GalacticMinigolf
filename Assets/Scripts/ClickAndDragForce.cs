@@ -69,7 +69,8 @@ public class ClickAndDragForce : MonoBehaviour {
         }
         if(Controls.Released() && grabbing)
         {
-            ApplyForce();
+            preditor.SetLineToConsistent();
+            ball.simulate = true;
             movingCamera.enabled = true;
             grabbing = false;
         }
@@ -99,7 +100,7 @@ public class ClickAndDragForce : MonoBehaviour {
         
     }
 
-    void ApplyForce()
+    /*void ApplyForce()
     {
 
         Vector2 worldPos = Controls.ClickedPosition();
@@ -110,5 +111,5 @@ public class ClickAndDragForce : MonoBehaviour {
         waitFrames = 5;
         nextFrame = true;
         OrbitPredictor.instance.showConsistentLine = false;
-    }
+    }*/
 }

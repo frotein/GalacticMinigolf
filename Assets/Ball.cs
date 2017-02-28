@@ -21,7 +21,10 @@ public class Ball : MonoBehaviour {
 	void FixedUpdate ()
     {
         if(simulate)
-            OrbitPredictor.instance.Step(this);
+        {
+            OrbitPredictor.instance.PhysicsStepForConsistentLine(this);
+            OrbitPredictor.instance.RenderConsistentLine();
+        }
 
 	}
 }

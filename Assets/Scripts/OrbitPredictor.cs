@@ -183,8 +183,7 @@ public class OrbitPredictor : MonoBehaviour {
     }
     public void RunSimulateCoroutine(Ball body, Vector2 vel, int steps)
     {
-        allPositions = new List<Vector3>();
-        allPositions.Add(body.transform.position);
+       
         InitialValues(body.transform.position, body.velocity + vel, body.mass);
         this.steps = steps;
         StartCoroutine("SimulateCo");
@@ -193,29 +192,36 @@ public class OrbitPredictor : MonoBehaviour {
     public IEnumerator SimulateCo()
     {
         simulating = true;
-        
-        velocities = new List<Vector2>();
-        velocities.Add(velocity);
+        allPositions = new List<Vector3>();
         for (int i = 0; i < steps; i++)
         {
             PhysicsStep();
             allPositions.Add(new Vector3(position.x, position.y, 0));
-            velocities.Add(velocity);
-            if (i % 600 == 0)
-                yield return null;
+         //   if (i % 600 == 0)
+           //     yield return null;
         }
 
         simulating = false;
+
         Render();
+
+        yield return null;
         
         
     }
-
+    public void SetLineToConsistent()
+    {
+        consistentLinePositions = new List<Vector3>(allPositions);
+        consistentLinePosition = consistentLinePositions[consistentLinePositions.Count -  1];
+        consistentLineVelocity = velocity;
+        consistentLineMass = mass;
+    }
     void DrawConsistentLine()
     {
         lineRenderer.numPositions = consistentLinePositions.Count;
         lineRenderer.SetPositions(consistentLinePositions.ToArray());
     }
+
     // returns the recorded positions in local space of par, if par is null it is in world space
     public Vector2[] SimulationPositions(Transform par = null)
     {
@@ -267,6 +273,12 @@ public class OrbitPredictor : MonoBehaviour {
        
         lineRenderer. numPositions = allPositions.Count;
         lineRenderer.SetPositions(allPositions.ToArray());
+    }
+
+    public void RenderConsistentLine()
+    {
+        lineRenderer.numPositions = consistentLinePositions.Count;
+        lineRenderer.SetPositions(consistentLinePositions.ToArray());
     }
     void InitialValues(Vector2 pos, Vector2 vel, float mas)
     {
@@ -326,7 +338,7 @@ public class OrbitPredictor : MonoBehaviour {
         position += velocity * Time.fixedDeltaTime;
     }
 
-    void PhysicsStepForConsistentLine()
+    public void PhysicsStepForConsistentLine(Ball b = null)
     {
         Collider2D[] cols2 = Physics2D.OverlapCircleAll(consistentLinePosition, radius);
         foreach (Collider2D col in cols2)
@@ -349,5 +361,13 @@ public class OrbitPredictor : MonoBehaviour {
         { consistentLineVelocity *= (1f - (Time.fixedDeltaTime * drag)); }
 
         consistentLinePosition += consistentLineVelocity * Time.fixedDeltaTime;
+
+        consistentLinePositions.Add(consistentLinePosition);
+       // consistentLinePositions.RemoveAt(0);
+        if (b != null)
+            b.transform.position = consistentLinePositions[0];
+
+       
+       
     }
 }

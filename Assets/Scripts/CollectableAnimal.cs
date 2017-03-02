@@ -7,13 +7,16 @@ public class CollectableAnimal : MonoBehaviour {
     public Transform planetOn;
     bool collected;
     public bool snapToPlanet;
+    float radiusSqr;
     // Use this for initialization
 	void Start ()
     {
         collected = false;
         Vector2 dir = transform.position - planetOn.position;
         transform.up = dir.normalized;
-        BoxCollider2D myCollider = transform.GetComponent<BoxCollider2D>();
+        CircleCollider2D myCollider = transform.GetComponent<CircleCollider2D>();
+        float radius = myCollider.radius * transform.lossyScale.x;
+        radiusSqr = radius * radius;
          // get the collider used for the planets surface do the animal can be placed Collectly on the ground
         CircleCollider2D[] cols = planetOn.GetComponents<CircleCollider2D>();
 
@@ -25,8 +28,8 @@ public class CollectableAnimal : MonoBehaviour {
                 {
                     if (!col.isTrigger)
                     {
-                        float radius = col.radius * planetOn.transform.localScale.x;
-                        transform.position = planetOn.position + (dir.normalized * (radius + (myCollider.size.y / 2f))).XYZ(0);
+                        float radi = col.radius * planetOn.transform.localScale.x;
+                        //transform.position = planetOn.position + (dir.normalized * (radi + (myCollider.size.y / 2f))).XYZ(0);
                         break;
                     }
                 }
@@ -39,17 +42,16 @@ public class CollectableAnimal : MonoBehaviour {
     }
 	
 	// Update is called once per frame
-	void Update ()
+	void FixedUpdate ()
     {
-		
-	}
+        float distSqr = Mathf.Abs(transform.position.x - Ball.instance.transform.position.x) + Mathf.Abs(transform.position.y - Ball.instance.transform.position.y);
+        if (distSqr < radiusSqr) Collected();
+    }
 
-    private void OnTriggerEnter2D(Collider2D other)
+   
+    void Collected()
     {
-        if(other.transform.tag == "Player")
-        {
-            collected = true;
-            transform.GetComponent<SpriteRenderer>().enabled = false;
-        }
+        collected = true;
+        transform.GetComponent<SpriteRenderer>().enabled = false;
     }
 }

@@ -11,10 +11,13 @@ public class Ball : MonoBehaviour {
     public float drag;
     public Vector2 simulatedPosition;
     public bool simulate;
+    public static Ball instance;
+    public Transform planetOn;
 	// Use this for initialization
 	void Start ()
     {
-        simulatedPosition = transform.position;	
+        simulatedPosition = transform.position;
+        instance = this;
 	}
 	
 	// Update is called once per frame

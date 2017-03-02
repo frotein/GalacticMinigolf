@@ -29,13 +29,16 @@ public class OrbitPredictor : MonoBehaviour {
     float consistentLineMass;
     public bool simulating;
     int steps;
+    public bool consistentLineHitPlanet;
+    public bool lineHitPlanet;
+    int currentStep = 0;
     // Use this for initialization
 	void Start ()
     {
         actualVels = new List<Vector2>();
         instance = this;
         ResetConsistentLine();
-
+        lineHitPlanet = false;
         
 
     }
@@ -45,8 +48,9 @@ public class OrbitPredictor : MonoBehaviour {
     {
         if (hasConsistentLine)
         {
-            consistentLinePositions.RemoveAt(0);
-            SimulateConsistentLineForDistance(consistentLineLength);
+            if(consistentLinePositions.Count > 0)
+                consistentLinePositions.RemoveAt(0);
+            //
             if(showConsistentLine)
                 DrawConsistentLine();   
         }
@@ -58,7 +62,7 @@ public class OrbitPredictor : MonoBehaviour {
         consistentLineMass = ball.mass;
         consistentLinePosition = ball.transform.position;
         consistentLineVelocity = vel;
-        Debug.Log("reset line");
+        consistentLineHitPlanet = false;
         if (hasConsistentLine)
         {
             SimulateConsistentLineForDistance(consistentLineLength);
@@ -125,12 +129,13 @@ public class OrbitPredictor : MonoBehaviour {
         float lnth = TotalLengthForConsistentLine();
         int stepsRan = 0;
        
-        while (lnth < dist)
+        while (lnth < dist && !consistentLineHitPlanet)
         {
             PhysicsStepForConsistentLine();
             consistentLinePositions.Add(new Vector3(consistentLinePosition.x, consistentLinePosition.y, 0));
             lnth = TotalLengthForConsistentLine();
             stepsRan++;
+            currentStep = stepsRan;
         }
     }
 
@@ -183,7 +188,7 @@ public class OrbitPredictor : MonoBehaviour {
     }
     public void RunSimulateCoroutine(Ball body, Vector2 vel, int steps)
     {
-       
+        lineHitPlanet = false;
         InitialValues(body.transform.position, body.velocity + vel, body.mass);
         this.steps = steps;
         StartCoroutine("SimulateCo");
@@ -193,12 +198,16 @@ public class OrbitPredictor : MonoBehaviour {
     {
         simulating = true;
         allPositions = new List<Vector3>();
+        currentStep = 0;
         for (int i = 0; i < steps; i++)
         {
             PhysicsStep();
             allPositions.Add(new Vector3(position.x, position.y, 0));
-         //   if (i % 600 == 0)
-           //     yield return null;
+            //   if (i % 600 == 0)
+            //     yield return null;
+            if (lineHitPlanet) i = steps;
+
+            currentStep++;
         }
 
         simulating = false;
@@ -215,6 +224,7 @@ public class OrbitPredictor : MonoBehaviour {
         consistentLinePosition = consistentLinePositions[consistentLinePositions.Count -  1];
         consistentLineVelocity = velocity;
         consistentLineMass = mass;
+        consistentLineHitPlanet = false;
     }
     void DrawConsistentLine()
     {
@@ -270,7 +280,6 @@ public class OrbitPredictor : MonoBehaviour {
 
     void Render()
     {
-       
         lineRenderer. numPositions = allPositions.Count;
         lineRenderer.SetPositions(allPositions.ToArray());
     }
@@ -315,22 +324,23 @@ public class OrbitPredictor : MonoBehaviour {
     }
     void PhysicsStep()
     {
-        Collider2D[] cols2 = Physics2D.OverlapCircleAll(position, radius);
-        foreach(Collider2D col in cols2)
+        foreach(PointEffector2D effector in effectors)
         {
-            if(col.usedByEffector)
-            {
-                PointEffector2D effector = col.GetComponent<PointEffector2D>();
-                Vector2 dir = new Vector2(effector.transform.position.x - position.x, effector.transform.position.y - position.y);
-                float distSqr = dir.magnitude * effector.distanceScale;
-                if (effector.forceMode == EffectorForceMode2D.InverseSquared)
-                    distSqr *= distSqr;
-                float force = effector.forceMagnitude / (distSqr);
-                float vel = (force / mass);
-                vel *= Time.fixedDeltaTime;
+            Vector2 dir = new Vector2(effector.transform.position.x - position.x, effector.transform.position.y - position.y);
+            float distSqr = dir.magnitude * effector.distanceScale;
+            float effectorRadius = effector.GetComponent<CircleCollider2D>().radius * effector.transform.lossyScale.x;
+            if (dir.magnitude < effectorRadius + 1f && currentStep > 10)
+            { lineHitPlanet = true;  }
+            
 
-                velocity += -dir.normalized * vel;
-            }
+            if (effector.forceMode == EffectorForceMode2D.InverseSquared)
+                distSqr *= distSqr;
+            float force = effector.forceMagnitude / (distSqr);
+            float vel = (force / mass);
+            vel *= Time.fixedDeltaTime;
+
+            velocity += -dir.normalized * vel;
+            
         }
         if (drag != 0)
         { velocity *= (1f - (Time.fixedDeltaTime * drag)); }
@@ -340,13 +350,17 @@ public class OrbitPredictor : MonoBehaviour {
 
     public void PhysicsStepForConsistentLine(Ball b = null)
     {
-        Collider2D[] cols2 = Physics2D.OverlapCircleAll(consistentLinePosition, radius);
-        foreach (Collider2D col in cols2)
+        if (!consistentLineHitPlanet)
         {
-            if (col.usedByEffector)
+            foreach (PointEffector2D effector in effectors)
             {
-                PointEffector2D effector = col.GetComponent<PointEffector2D>();
                 Vector2 dir = new Vector2(effector.transform.position.x - consistentLinePosition.x, effector.transform.position.y - consistentLinePosition.y);
+                float effectorRadius = effector.GetComponent<CircleCollider2D>().radius * effector.transform.lossyScale.x;
+                if (b != null)
+                {
+                    if (dir.magnitude < effectorRadius + b.radius && currentStep > 10)
+                    { consistentLineHitPlanet = true; Debug.Log("Hitting " + effector.transform.name); }
+                }
                 float distSqr = dir.magnitude * effector.distanceScale;
                 if (effector.forceMode == EffectorForceMode2D.InverseSquared)
                     distSqr *= distSqr;
@@ -356,16 +370,21 @@ public class OrbitPredictor : MonoBehaviour {
 
                 consistentLineVelocity += -dir.normalized * vel;
             }
+
+            if (drag != 0)
+            { consistentLineVelocity *= (1f - (Time.fixedDeltaTime * drag)); }
+
+            consistentLinePosition += consistentLineVelocity * Time.fixedDeltaTime;
+
+            consistentLinePositions.Add(consistentLinePosition);
         }
-        if (drag != 0)
-        { consistentLineVelocity *= (1f - (Time.fixedDeltaTime * drag)); }
-
-        consistentLinePosition += consistentLineVelocity * Time.fixedDeltaTime;
-
-        consistentLinePositions.Add(consistentLinePosition);
-       // consistentLinePositions.RemoveAt(0);
+        // consistentLinePositions.RemoveAt(0);
         if (b != null)
+        {
             b.transform.position = consistentLinePositions[0];
+            if (consistentLinePositions.Count <= 1)
+            { b.simulate = false; consistentLineHitPlanet = false; }
+        }
 
        
        

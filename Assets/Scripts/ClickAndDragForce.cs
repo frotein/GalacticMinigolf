@@ -65,7 +65,7 @@ public class ClickAndDragForce : MonoBehaviour {
             Vector2 worldPos = Controls.ClickedPosition();
             Vector2 dirAndPower = worldPos - (Vector2)transform.position;
            if(!preditor.simulating)
-            preditor.RunSimulateCoroutine(ball, dirAndPower * -forceIncreaseRate / scale, ((int)(500 * scale)));
+             preditor.RunSimulateCoroutine(ball, dirAndPower * -forceIncreaseRate / scale, ((int)(500 * scale)));
         }
         if(Controls.Released() && grabbing)
         {
